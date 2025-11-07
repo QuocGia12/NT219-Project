@@ -82,12 +82,6 @@ Wiener attack không chỉ là lý thuyết mà có ứng dụng thực tế qua
 - **Hiện đại**: Các thư viện hiện đại đã fix (luôn dùng `d` đủ lớn).
 - **Không phổ biến**: Ít gặp trong thực tế hơn các attack khác.
 
-## Tại sao vẫn quan trọng?
-
-1. **Foundation**: Là nền tảng cho nhiều attack phức tạp hơn
-
-2. **Education**: Giảng dạy trong các khóa học crypto và security.
-
 ## Biện pháp phòng thủ
 
 - **Luôn dùng `d` đủ lớn**: `d > n^0.25`.
@@ -100,7 +94,3 @@ Wiener attack không chỉ là lý thuyết mà có ứng dụng thực tế qua
 PoC chứng minh thành công:
 - Wiener attack hiệu quả khi `d` nhỏ.
 - Có thể khôi phục hoàn toàn private key từ public key.
-- Ứng dụng thực tế trong security research và pentesting.
-- Cảnh báo quan trọng về việc generate RSA key.
-
-**Bài học**: Trong cryptography, "tối ưu" không đúng cách có thể phá vỡ hoàn toàn hệ thống!
