@@ -254,12 +254,12 @@ def main():
     try:
         if attack.connect():
             # Test với các message
-            test_messages = [b"hello world"]
+            test_messages = [b"Hom nay la mot ngay dep troi.",]
             
             for msg in test_messages:
-                print(f"\n{'='*60}")
-                print(f"ATTACKING: {msg}")
-                print(f"{'='*60}")
+                # print(f"\n{'='*60}")
+                # print(f"ATTACKING: {msg}")
+                # print(f"{'='*60}")
                 
                 start_time = time.time()
                 result = attack.attack(msg)
