@@ -15,118 +15,89 @@ import subprocess
 import tempfile
 import hashlib
 import time
+import re
 
 def generate_512bit_rsa():
     """Tạo key RSA 512-bit"""
     print("[+] Generating 512-bit RSA key...")
     
-    try:
-        # Tạo private key 512-bit bằng OpenSSL
-        result = subprocess.run([
-            'openssl', 'genrsa', '512'
-        ], check=True, capture_output=True, text=True)
-        
-        private_key = result.stdout
-        
-        # Lưu tạm để parse
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.pem') as f:
-            f.write(private_key)
-            key_file = f.name
-        
-        # Parse bằng openssl rsa -text
-        result_text = subprocess.run([
-            'openssl', 'rsa', '-in', key_file, '-text', '-noout'
-        ], capture_output=True, text=True, check=True)
-        
-        output = result_text.stdout
-        
-        # Parse hex values từ output
-        hex_values = []
-        current_hex = ""
-        
-        for line in output.split('\n'):
-            line = line.strip()
-            if ':' in line and not line.startswith('Private-Key') and not line.startswith('publicExponent'):
-                hex_part = ""
-                for part in line.split(':'):
-                    part = part.strip()
-                    if len(part) == 2 and all(c in '0123456789abcdefghiklmnopqrstuvwxyz' for c in part):
-                        hex_part += part
-                
-                if hex_part:
-                    current_hex += hex_part
-            else:
-                if current_hex:
-                    hex_values.append(current_hex)
-                    current_hex = ""
-        
-        if current_hex:
-            hex_values.append(current_hex)
-        
-        # Lấy modulus và private exponent
-        if len(hex_values) >= 3:
-            n_hex = hex_values[0]
-            e = 65537
-            d_hex = hex_values[2]
-        else:
-            raise ValueError("Not enough hex values")
-        
-        n = int(n_hex, 16)
-        d = int(d_hex, 16)
-        
-        if n.bit_length() < 500:
-            raise ValueError(f"Modulus too small: {n.bit_length()} bits")
-        
-        print(f"[+] RSA key: {n.bit_length()} bits")
-        return n, e, d
-        
-    except Exception as e:
-        print(f"[-] OpenSSL error: {e}")
-        # Fallback to Python
-        return generate_512bit_rsa_python()
+    # Tạo private key 512-bit bằng OpenSSL
+    result = subprocess.run([
+        'openssl', 'genrsa', '512'
+    ], check=True, capture_output=True, text=True)
+    
+    private_key = result.stdout
+    
+    # Lưu tạm để parse
+    with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.pem') as f:
+        f.write(private_key)
+        key_file = f.name
+    
+    # Parse bằng openssl rsa -text
+    result_text = subprocess.run([
+        'openssl', 'rsa', '-in', key_file, '-text', '-noout'
+    ], capture_output=True, text=True, check=True)
+    
+    output = result_text.stdout
+    
+    # Robust parsing: find 'modulus' and 'privateExponent' sections in the
+    # openssl -text output and collect hex groups across multiple lines.
+    n_hex = ""
+    d_hex = ""
+    in_modulus = False
+    in_privexp = False
 
-def generate_512bit_rsa_python():
-    """Fallback: tạo RSA 512-bit bằng Python"""
-    print("[+] Generating 512-bit RSA key using Python...")
-    
-    def is_prime(n, k=20):
-        if n <= 1: return False
-        if n <= 3: return True
-        if n % 2 == 0: return False
-        
-        s, d = 0, n - 1
-        while d % 2 == 0:
-            s += 1
-            d //= 2
-        
-        for _ in range(k):
-            a = random.randint(2, n-2)
-            x = pow(a, d, n)
-            if x == 1 or x == n-1:
-                continue
-            for _ in range(s-1):
-                x = pow(x, 2, n)
-                if x == n-1:
-                    break
-            else:
-                return False
-        return True
-    
-    def generate_prime(bits):
-        while True:
-            p = random.getrandbits(bits)
-            p |= (1 << (bits-1)) | 1
-            if is_prime(p):
-                return p
-    
-    p = generate_prime(256)
-    q = generate_prime(256)
-    n = p * q
+    for line in output.splitlines():
+        s = line.strip()
+
+        # Start/stop markers
+        if s.lower().startswith('modulus:'):
+            in_modulus = True
+            in_privexp = False
+            # collect any hex on the same line after the 'modulus:' label
+            tail = s.partition(':')[2]
+            groups = re.findall(r"[0-9a-fA-F]+", tail)
+            n_hex += ''.join(groups)
+            continue
+        if s.lower().startswith('privateexponent:'):
+            in_modulus = False
+            in_privexp = True
+            tail = s.partition(':')[2]
+            groups = re.findall(r"[0-9a-fA-F]+", tail)
+            d_hex += ''.join(groups)
+            continue
+
+        # stop collection when other labels appear
+        if any(s.lower().startswith(lbl) for lbl in ('prime1:', 'prime2:', 'publicexponent:', 'exponent:')):
+            in_modulus = False
+            in_privexp = False
+            continue
+
+        # If currently inside modulus or privateExponent blocks, pull hex groups
+        if in_modulus:
+            groups = re.findall(r"[0-9a-fA-F]+", s)
+            n_hex += ''.join(groups)
+        elif in_privexp:
+            groups = re.findall(r"[0-9a-fA-F]+", s)
+            d_hex += ''.join(groups)
+
+    # Normalize / verify
+    n_hex = n_hex.lower()
+    d_hex = d_hex.lower()
+    if not n_hex or not d_hex:
+        # helpful debug output before failing
+        print("[DEBUG] openssl -text output:\n" + output)
+        raise ValueError("Not enough key material parsed (modulus or private exponent missing)")
+
     e = 65537
-    phi = (p-1) * (q-1)
-    d = pow(e, -1, phi)
     
-    print(f"[+] Python RSA: {n.bit_length()} bits")
+    n = int(n_hex, 16)
+    d = int(d_hex, 16)
+    
+    if n.bit_length() < 500:
+        raise ValueError(f"Modulus too small: {n.bit_length()} bits")
+    
+    print(f"[+] RSA key: {n.bit_length()} bits")
     return n, e, d
 
 class OracleServer:
