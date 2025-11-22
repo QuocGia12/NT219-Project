@@ -148,8 +148,8 @@ def main():
     print(f"[+] Server Ready. Math Loop Load: {WORKLOAD_LOOPS}")
     print(f"[+] Public Modulus (n): {n:x}")
     print(f"[+] Public Exponent (e): {e:x}")
-    print(f"[+] Ciphertext (c0): {c0.hex()}")
-    print(f"[+] Session Secret (for debug): {secret.hex()}")
+    # print(f"[+] Ciphertext (c0): {c0.hex()}")
+    # print(f"[+] Session Secret (for debug): {secret.hex()}")
     
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
