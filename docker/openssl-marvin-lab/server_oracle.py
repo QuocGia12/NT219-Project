@@ -27,9 +27,9 @@ CIPHERTEXT_FILE = "/app/c0.bin"
 # ta cần khuếch đại độ trễ này lên mức mili-seconds (thay vì nano-seconds).
 #
 # Ta sẽ dùng phép tính: result = pow(base, exponent, modulus)
-# Với các số rất lớn (4096 bits).
+# Với các số rất lớn (2048 bits).
 
-def generate_huge_int(bits=4096):
+def generate_huge_int(bits=2048):
     return random.getrandbits(bits)
 
 # Tạo sẵn các số lớn trong bộ nhớ để không tính thời gian random vào thời gian xử lý
