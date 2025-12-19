@@ -64,7 +64,7 @@ def HastadAttack(n1, n2, n3, ct1, ct2, ct3): # return plaintext(bytes)
 def main(): 
     pt=input("Nhập vào plaintext: ").encode()
     n1, n2, n3, ct1, ct2, ct3=encrypt(pt)
-    attack=HastadAttack(n1, n2, n3, ct1, ct2, ct3)
+    recover = HastadAttack(n1, n2, n3, ct1, ct2, ct3)
     print(f"n1: {n1}")
     print(f"ct1: {ct1}")
     print(f"n2: {n2}")
@@ -72,7 +72,7 @@ def main():
     print(f"n3: {n3}")
     print(f"ct3: {ct3}")
     
-    print(f"Attack: {attack}")
+    print(f"Recover: {recover}")
 
 if __name__=="__main__": 
     main()
