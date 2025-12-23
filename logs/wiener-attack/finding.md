@@ -1,0 +1,2 @@
+# Finding
+Đúng như lý thuyết, **Wiener Attack** luôn thực hiện thành công khi `d < n^0.25`(tức `d_bits < n_bits/4`), ngược lại khi `d > n^0.25` thì kết quả **Wiener Attack** đã thực hiện luôn là `fail`
