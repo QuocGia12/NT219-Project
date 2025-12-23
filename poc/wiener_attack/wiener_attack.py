@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 
 import math
+from sympy import isprime 
+from random import randint
+from Cryptodome.Util.number import getPrime, bytes_to_long, long_to_bytes
 
 def cont_frac(numer, denom):
     # tra ve danh sach phan so lien tuc a0,a1,...
@@ -53,17 +56,35 @@ def wiener_attack(n, e):
                 return (int(p), int(q), int(d))
     return None
 
-def int_to_bytes(m):
-    if m == 0:
-        return b""
-    length = (m.bit_length() + 7) // 8
-    return m.to_bytes(length, "big")
+
+def iroot4(n):
+    lo, hi = 0, 1 << ((n.bit_length() + 3) // 4)
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if mid**4 <= n:
+            lo = mid + 1
+        else:
+            hi = mid
+    return lo - 1
+
+def VulnServer(pt): # mô phỏng server thực hiện encrypt RSA với d < 1/3 * n^0.25 
+    p = getPrime(1024)
+    q = getPrime(1024)
+    n = p*q 
+    phi = (p-1)*(q-1)
+    d = 4
+    while(isprime(d)==0): 
+        d = randint(100, (iroot4(n))//3)
+    e = pow(d, -1, phi)
+    m = bytes_to_long(pt)
+    ct = pow(m, e, n)
+
+    return ct, e, n 
+    
 
 def main():
-    # Nhap e, n, c tu ban phim
-    e = int(input("Enter e: ").strip())
-    n = int(input("Enter n: ").strip())
-    c = int(input("Enter ciphertext c: ").strip())
+    pt = input("Nhap plaintext: ").encode()
+    c, e, n = VulnServer(pt)
 
     print("[*] Loaded public values:")
     print("    n bitlen:", n.bit_length())
@@ -76,12 +97,12 @@ def main():
         return
     p, q, d = res
     print("[+] Recovered p,q,d:")
-    print("    p bitlen:", p.bit_length())
-    print("    q bitlen:", q.bit_length())
+    print("    p:", p)
+    print("    q:", q)
     print("    d:", d)
     # giai ma
     m = pow(c, d, n)
-    b = int_to_bytes(m)
+    b = long_to_bytes(m)
     # co the la chuoi ascii, neu decode khong duoc se in hex de debug
     try:
         s = b.decode("utf-8")

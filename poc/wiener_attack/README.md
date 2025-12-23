@@ -4,7 +4,7 @@
 Triển khai tấn công Wiener trên RSA khi private exponent `d` quá nhỏ, chứng minh khả năng khôi phục private key chỉ từ public key mà không cần phân tích thừa số.
 
 ## Tổng quan
-Tấn công Wiener khai thác trường hợp private exponent `d` trong RSA quá nhỏ so với modulus `n`. Khi `d < n^0.25`, attacker có thể khôi phục private key thông qua **phân tích phân số liên tục** (continued fractions).
+Tấn công Wiener khai thác trường hợp private exponent `d` trong RSA quá nhỏ so với modulus `n`. Khi `d < (n^0.25)/3`, attacker có thể khôi phục private key thông qua **phân tích phân số liên tục** (continued fractions).
 
 ## Kiến trúc hệ thống
 ### 1. Wiener Attacker (`wiener_attack.py`)
@@ -70,7 +70,7 @@ Wiener attack không chỉ là lý thuyết mà có ứng dụng thực tế qua
    - Audit code RSA trong các ứng dụng.
 
 2. **Phân tích malware**
-   - Malware đôi time dùng RSA với `d` nhỏ để tiết kiệm bộ nhớ.
+   - Malware đôi khi dùng RSA với `d` nhỏ để tiết kiệm bộ nhớ.
    - Có thể break encryption của malware.
 
 3. **Hệ thống nhúng (IoT)**
@@ -84,7 +84,7 @@ Wiener attack không chỉ là lý thuyết mà có ứng dụng thực tế qua
 
 ## Biện pháp phòng thủ
 
-- **Luôn dùng `d` đủ lớn**: `d > n^0.25`.
+- **Luôn dùng `d` đủ lớn**: `d > (n^0.25)/3`.
 - **Dùng public exponent tiêu chuẩn**: e = 65537.
 - **Kiểm tra key**: Verify private key trước khi dùng.
 - **Thư viện chuẩn**: Dùng thư viện crypto đã được audit.
