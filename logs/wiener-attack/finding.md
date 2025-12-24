@@ -1,2 +1,3 @@
 # Finding
 Đúng như lý thuyết, **Wiener Attack** luôn thực hiện thành công khi `d < n^0.25`(tức `d_bits < n_bits/4`), ngược lại khi `d > n^0.25` thì kết quả **Wiener Attack** đã thực hiện luôn là `fail`
+Bên cạnh đó cũng nhận thấy rằng thời gian thực hiện tấn công đồng biến với số bits của `n` và `d`, nhưng nhìn chung thời gian thực hiện khá nhanh(với `n` 2028 bits và `d` 480 bits thì tấn công trong 5.105448s)
