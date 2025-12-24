@@ -1,12 +1,40 @@
-## Giới thiệu
-Code mô phỏng một unsecure server thực hiện việc mã hóa với public exponent nhỏ: `e = 3`
-## Chi tiết 
-- Hàm `encrypt(pt)` mô phỏng việc server mã hóa cùng một plaintext `pt` với 3 public key `n` khác nhau(`n1`, `n2`, `n3`), 3 ciphertext tương ứng là `ct1`, `ct2`, `ct3`
-- Hàm `HastadAttack(n1, n2, n3, ct1, ct2, ct3)` thực hiện Hastad Attack để khôi phục plaintext `pt` từ các tham số tạo từ hàm `encrypt(pt)`
-## Hướng dẫn chạy 
-Tại thư mục `/poc/hastad_attack`
-```bash
-python main.py
-```
-## Nhận xét 
-Nếu như có đầy đủ tham số cần thiết thì hàm `HastadAttack(n1, n2, n3, ct1, ct2, ct3)` thực hiện tấn công rất nhanh. kết quả là attacker khôi phục được plaintext, plaintext này có thể là premaster secret, từ đó attacker tính được session key, đọc được toàn bộ gói tin gửi đi trong session đó. 
+# Håstad’s Broadcast Attack 
+**Bối cảnh**
+
+RSA mã hóa một thông điệp $m$ thành:
+
+$$
+c = m^e \mod n
+$$
+
+với $e$ là **public exponent** (thường nhỏ, như 3 hoặc 5)
+và $n = pq$ là modulus.
+
+Håstad’s Broadcast Attack tấn công vào điểm yếu sau: 
+> Nếu e đủ nhỏ làm cho $m^e<n$ thì khi đó việc $\mod n$ trong $c=m^e \mod n$ không còn tác dụng, suy ra $m = \sqrt[e]{c}$
+
+**Giả định:**
+
+* Cùng một thông điệp $m$ được gửi cho **e người nhận khác nhau**
+* Mỗi người có **modulus khác nhau** $n_1, n_2, \dots, n_e$
+* Cùng exponent nhỏ $e$ (ví dụ $e = 3$)
+* Không có padding ngẫu nhiên (số nguyên $m$ ở mỗi lần mã hóa là giống nhau)
+
+Ta thu được:
+$$
+c_i = m^e \mod n_i
+$$
+
+Nếu các $n_i$ **pairwise coprime(nguyên tố cùng nhau từng đôi một, chú ý điều này rất dễ xảy ra trong RSA khi $n_i$ chỉ có hai ước nguyên tố lớn ngẫu nhiên)**, ta có thể dùng **Chinese Remainder Theorem (CRT)** để tính được $C$ với:
+
+$$
+C = m^e \pmod{N} \quad \text{với } N = n_1 n_2 \dots n_e
+$$
+
+Do $m^e < N$ vì $m < n_i \space \forall i \in [1, e]$, ta có thể lấy:
+$$
+m = \sqrt[e]{C}
+$$
+(nghĩa là căn bậc e trên số nguyên, **không modulo**).
+
+**Kết quả:** attacker có thể khôi phục plaintext mà **không cần khóa bí mật**.
