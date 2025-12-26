@@ -21,6 +21,7 @@ Håstad’s Broadcast Attack tấn công vào điểm yếu sau:
 * Không có padding ngẫu nhiên (số nguyên $m$ ở mỗi lần mã hóa là giống nhau)
 
 Ta thu được:
+
 $$
 c_i = m^e \mod n_i
 $$
@@ -32,9 +33,11 @@ C = m^e \pmod{N} \quad \text{với } N = n_1 n_2 \dots n_e
 $$
 
 Do $m^e < N$ vì $m < n_i \space \forall i \in [1, e]$, ta có thể lấy:
+
 $$
 m = \sqrt[e]{C}
 $$
+
 (nghĩa là căn bậc e trên số nguyên, **không modulo**).
 
 **Kết quả:** attacker có thể khôi phục plaintext mà **không cần khóa bí mật**.
