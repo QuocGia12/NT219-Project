@@ -10,6 +10,25 @@ import time
 import random
 import sys
 
+def recv_lines(sock, count):
+    buffer = b""
+    lines = []
+
+    while len(lines) < count:
+        data = sock.recv(4096)
+        if not data:
+            raise ConnectionError("Server closed connection")
+
+        buffer += data
+        while b"\n" in buffer:
+            line, buffer = buffer.split(b"\n", 1)
+            lines.append(line.decode().strip())
+            if len(lines) == count:
+                break
+
+    return lines
+
+
 class UniversalSessionAttack:
     def __init__(self):
         self.socket = None
@@ -61,9 +80,12 @@ class UniversalSessionAttack:
             self.socket.connect((self.host, self.port))
             
             # Nhận session info (cả hai server đều gửi format này)
-            session_line = self.socket.recv(256).decode().strip()
-            modulus_line = self.socket.recv(256).decode().strip()
-            exponent_line = self.socket.recv(256).decode().strip()
+            # session_line = self.socket.recv(256).decode().strip()
+            # modulus_line = self.socket.recv(256).decode().strip()
+            # exponent_line = self.socket.recv(256).decode().strip()
+
+            session_line, modulus_line, exponent_line = recv_lines(self.socket, 3)
+
             
             self.session_id = session_line.split(":")[1]
             self.n = int(modulus_line.split(":")[1], 16)
@@ -79,6 +101,7 @@ class UniversalSessionAttack:
             client_hello_padded = self.pkcs1_pad(b"ClientHello")
             client_hello_encrypted = pow(client_hello_padded, self.e, self.n)
             
+            time.sleep(0.1)
             hello_msg = f"CLIENT_HELLO:{client_hello_encrypted:x}\n"
             self.socket.sendall(hello_msg.encode())
             print(f"[+] Sent ClientHello (PKCS#1 v1.5)")
