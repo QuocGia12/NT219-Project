@@ -186,36 +186,98 @@ class OracleServer:
             return False
     
     def handle_client(self, conn, addr):
-        """Xử lý client connection"""
+        """
+        Xử lý kết nối từ Client với cơ chế Buffering để chống lỗi TCP Fragmentation
+        """
         print(f"[+] Client connected: {addr}")
         
+        # 1. Tạo Session Secret giả lập cho kết nối này (Mỗi client 1 secret riêng)
+        # ------------------------------------------------------------------
+        # Tạo secret ngẫu nhiên 16 bytes (AES-128 key giả lập)
+        session_secret = os.urandom(16)
+        
+        # Thực hiện PKCS#1 v1.5 Padding: 00 02 [padding] 00 [secret]
+        # k là độ dài byte của modulus (ví dụ 512 bit -> 64 bytes)
+        k = (self.n.bit_length() + 7) // 8
+        
+        # Độ dài padding = k - 3 - len(secret)
+        pad_len = k - 3 - len(session_secret)
+        if pad_len < 8:
+            padding = b'\x01' * 8 # Fallback nếu key quá ngắn (không nên xảy ra)
+        else:
+            # Padding phải là các byte khác 0
+            padding = bytes([random.randint(1, 255) for _ in range(pad_len)])
+            
+        m_bytes = b'\x00\x02' + padding + b'\x00' + session_secret
+        m_int = int.from_bytes(m_bytes, 'big')
+        
+        # Mã hóa: c = m^e mod n
+        c_int = pow(m_int, self.e, self.n)
+        encrypted_secret_hex = hex(c_int)[2:]
+        # ------------------------------------------------------------------
+
+        buffer = ""  # Bộ đệm chứa dữ liệu chưa hoàn chỉnh
+        
         try:
-            # Thực hiện handshake
-            if not self.handle_client_handshake(conn):
-                conn.close()
-                return
-            
-            print(f"[+] Handshake completed with {addr}")
-            print(f"    Session {self.session_id} established")
-            print(f"    Secret: {self.session_secret.hex()}")
-            
-            # Chế độ oracle: chỉ trả về 1/0 cho padding
             while True:
+                # Nhận dữ liệu (chunk nhỏ 1024 là đủ)
                 data = conn.recv(1024)
                 if not data:
-                    break
+                    break  # Client ngắt kết nối
                 
-                try:
-                    ciphertext_hex = data.decode().strip()
-                    ciphertext_int = int(ciphertext_hex, 16)
+                # Cộng dồn vào bộ đệm
+                buffer += data.decode('utf-8', errors='ignore')
+                
+                # Xử lý khi tìm thấy ký tự xuống dòng
+                while "\n" in buffer:
+                    # Tách lệnh đầu tiên ra khỏi bộ đệm
+                    line, buffer = buffer.split("\n", 1)
+                    msg = line.strip()
                     
-                    if self.pkcs1_v1_5_decrypt(ciphertext_int):
-                        conn.sendall(b"1\n")  # Padding hợp lệ
+                    if not msg: continue # Bỏ qua dòng trống
+                    
+                    if msg == "HELLO":
+                        # Gửi thông tin Public Key và Secret đã mã hóa cho Client
+                        # Format: n:e:session_id:encrypted_secret
+                        # session_id giả lập random
+                        sid = random.randint(1000, 9999)
+                        response = f"{self.n}:{self.e}:{sid}:{encrypted_secret_hex}\n"
+                        conn.sendall(response.encode())
+
+                    elif msg.startswith("PMS:"):
+                        # Đây là phần Oracle: Kiểm tra tính hợp lệ của padding
+                        try:
+                            # Lấy phần ciphertext hex sau dấu hai chấm "PMS:..."
+                            parts = msg.split(":")
+                            if len(parts) < 2:
+                                conn.sendall(b"0\n")
+                                continue
+                                
+                            ciphertext_hex = parts[1].strip()
+                            ciphertext_int = int(ciphertext_hex, 16)
+                            
+                            # Gọi hàm giải mã & kiểm tra padding (Hàm này có sẵn trong class của bạn)
+                            is_valid = self.pkcs1_v1_5_decrypt(ciphertext_int)
+                            
+                            if is_valid:
+                                conn.sendall(b"1\n") # Valid
+                            else:
+                                conn.sendall(b"0\n") # Invalid
+                                
+                        except ValueError:
+                            # Lỗi parse hex
+                            conn.sendall(b"0\n")
+                        except Exception as e:
+                            # Lỗi khác trong quá trình giải mã
+                            # print(f"Decryption error: {e}") 
+                            conn.sendall(b"0\n")
+                    
                     else:
-                        conn.sendall(b"0\n")  # Padding không hợp lệ
-                except:
-                    conn.sendall(b"ERR\n")
-                    
+                        # Lệnh không xác định
+                        conn.sendall(b"ERR\n")
+
+        except ConnectionResetError:
+            print(f"[-] Client {addr} reset connection violently.")
         except Exception as e:
             print(f"[-] Client error {addr}: {e}")
         finally:

@@ -57,7 +57,7 @@ class UniversalSessionAttack:
         
         try:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.socket.settimeout(10)
+            self.socket.settimeout(30)
             self.socket.connect((self.host, self.port))
             
             # Nhận session info (cả hai server đều gửi format này)
