@@ -1,0 +1,5 @@
+=== MARVIN ATTACK REPORT ===
+Status:       FAILED
+Duration:     995.09 seconds
+Total Queries:167486
+Recovered:    N/A
