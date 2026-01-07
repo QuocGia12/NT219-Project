@@ -23,13 +23,13 @@ Dự án bao gồm 3 file chính:
 * Thực hiện xác thực RSA thuần (Raw RSA) mà không kiểm tra định dạng chuẩn tắc (Canonical format).
 
 
-1. **`fixed_server.py`:**
+2. **`fixed_server.py`:**
 * Mô phỏng server bảo mật.
 * Sử dụng **Nonce** (Number used once) đi kèm trong message để định danh giao dịch.
 * Bỏ qua việc chữ ký trông như thế nào, chỉ quan tâm ID giao dịch (Nonce) đã được sử dụng hay chưa.
 
 
-1. **`attack.py`:**
+3. **`attack.py`:**
 * Đóng vai trò là User (ký hợp lệ) và Hacker (tạo chữ ký biến hình để tấn công).
 
 ## 🧠 Cơ sở lý thuyết & Lỗ hổng
