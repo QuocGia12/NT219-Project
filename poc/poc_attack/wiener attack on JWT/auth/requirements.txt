@@ -1,0 +1,4 @@
+flask
+requests
+pyjwt>=2.8.0
+pycryptodome
