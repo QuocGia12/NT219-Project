@@ -120,7 +120,8 @@ Wiener Attack thành công nếu: `d < 1/3 * n^(1/4)`
 ## 6. Cách chạy lab
 
 ### 6.1 Build và khởi động hệ thống
-Trong thư mục `poc/wiener-attack-on-jwt`:
+Terminal 1: 
+Trong thư mục `poc/poc_implement/wiener-attack-on-jwt`:
 
 ```bash 
 docker compose build
@@ -129,25 +130,22 @@ docker compose up
 
 ### 6.2 Lấy JWT hợp lệ (user thường)
 ```bash 
-curl -X POST http://localhost:8000/login
-
--H "Content-Type: application/json"
--d '{"username":"user","password":"password"}'
+curl -X POST http://localhost:8000/login -H "Content-Type: application/json" -d '{"username":"user","password":"password"}'
 ```
 
 
 ### 6.3 Thực hiện tấn công Wiener
-
+Terminal 2: 
+Trong thư mục `poc/poc_implement/wiener-attack-on-jwt/attacker`:
 ```bash 
 docker compose exec attacker bash
 python forge_jwt.py
 ```
-
+Nếu thành công sẽ nhận được `FORGED_TOKEN`
 
 ### 6.4 Gọi API admin bằng forged JWT
 ```bash 
-curl http://localhost:9000/api/admin
-
+curl http://localhost:9000/api/admin 
 -H "Authorization: Bearer <FORGED_TOKEN>"
 ```
 **Kết quả mong đợi:**
@@ -161,16 +159,16 @@ curl http://localhost:9000/api/admin
 
 ---
 
-## 7. Ý nghĩa bảo mật
+<!-- ## 7. Ý nghĩa bảo mật
 
 - JWT hợp lệ về chữ ký **không đồng nghĩa an toàn**
 - Public key là thông tin công khai → crypto yếu sẽ bị phá
 - Một lỗi mật mã có thể phá hủy toàn bộ hệ thống IAM
 - Không có RBAC hay middleware nào cứu được crypto yếu
 
----
+--- -->
 
-## 8. Bài học thực tế
+## 7. Bài học thực tế
 
 **KHÔNG BAO GIỜ**
 - Tự sinh RSA key
@@ -185,7 +183,7 @@ curl http://localhost:9000/api/admin
 
 ---
 
-## 9. Mục đích sử dụng
+## 8. Mục đích sử dụng
 
 Lab chỉ phục vụ **học tập, nghiên cứu**.
 
