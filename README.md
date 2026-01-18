@@ -1,8 +1,8 @@
 # Cryptanalysis on Asymmetric Ciphers: RSA & RSA‑Based Signatures
 
-**Subject:** NT219 - Cryptography
-**Class:** NT219.Q11.ANTN
-**Lecturer:** Mr. Nguyễn Ngọc Tự
+**Subject:** NT219 - Cryptography\
+**Class:** NT219.Q11.ANTN\
+**Lecturer:** Mr. Nguyễn Ngọc Tự\
 **Group Infomation:**
 | No. | Name | Student ID |
 |:-------:|-------|:-------:|
@@ -864,13 +864,13 @@ Bên cạnh đó, phân tích các kịch bản triển khai hiện đại như 
 Tóm lại, RSA vẫn có thể được sử dụng an toàn **chỉ khi** đi kèm với các chuẩn thiết kế hiện đại và triển khai cẩn trọng. Chúng tôi có thể khẳng định một nguyên lý cốt lõi trong mật mã học ứng dụng: **phần lớn các sự cố an ninh không xuất phát từ việc thuật toán bị phá, mà từ cách thuật toán được triển khai và sử dụng trong thực tế**. Việc hiểu rõ các điểm yếu này là nền tảng quan trọng để xây dựng, đánh giá và vận hành các hệ thống mật mã an toàn.
 
 ## VI. Reference 
-[1]. https://en.wikipedia.org/wiki/RSA_cryptosystem
-[2]. [Dan Boneh. Twenty Years of Attacks on the RSA Cryptosystem](https://crypto.stanford.edu/~dabo/papers/RSA-survey.pdf)
-[3]. [Daniel Bleichenbacher. Chosen Ciphertext Attacks Against Protocols Based on the RSA Encryption Standard PKCS#1](https://archiv.infsec.ethz.ch/education/fs08/secsem/bleichenbacher98.pdf)
-[4]. [Everlasting ROBOT: the Marvin Attack](https://people.redhat.com/~hkario/marvin/marvin-attack-paper.pdf)
-[5]. [Fault attacks for CRT based RSA: new attacks, new results, and new countermeasures](https://dl.ifip.org/db/conf/wistp/wistp2007/KimQ07.pdf)
-[6]. [Kocher. Timing Attacks on Implementations of Diffie-Hellman, RSA, DSS, and Other Systems ](https://paulkocher.com/doc/TimingAttacks.pdf)
-[7]. [James Manger. A Chosen Ciphertext Attack on RSA Optimal Asymmetric Encryption Padding (OAEP) as Standardized in PKCS #1 v2.0](https://archiv.infsec.ethz.ch/education/fs08/secsem/manger01.pdf)
+[1]. https://en.wikipedia.org/wiki/RSA_cryptosystem\
+[2]. [Dan Boneh. Twenty Years of Attacks on the RSA Cryptosystem](https://crypto.stanford.edu/~dabo/papers/RSA-survey.pdf)\
+[3]. [Daniel Bleichenbacher. Chosen Ciphertext Attacks Against Protocols Based on the RSA Encryption Standard PKCS#1](https://archiv.infsec.ethz.ch/education/fs08/secsem/bleichenbacher98.pdf)\
+[4]. [Everlasting ROBOT: the Marvin Attack](https://people.redhat.com/~hkario/marvin/marvin-attack-paper.pdf)\
+[5]. [Fault attacks for CRT based RSA: new attacks, new results, and new countermeasures](https://dl.ifip.org/db/conf/wistp/wistp2007/KimQ07.pdf)\
+[6]. [Kocher. Timing Attacks on Implementations of Diffie-Hellman, RSA, DSS, and Other Systems ](https://paulkocher.com/doc/TimingAttacks.pdf)\
+[7]. [James Manger. A Chosen Ciphertext Attack on RSA Optimal Asymmetric Encryption Padding (OAEP) as Standardized in PKCS #1 v2.0](https://archiv.infsec.ethz.ch/education/fs08/secsem/manger01.pdf)\
 [8]. https://en.wikipedia.org/wiki/Digital_signature
 
 
