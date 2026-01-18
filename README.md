@@ -1,4 +1,4 @@
-# Capstone Project — Cryptanalysis on Asymmetric Ciphers: RSA & RSA‑Based Signatures
+# Cryptanalysis on Asymmetric Ciphers: RSA & RSA‑Based Signatures
 
 **Subject:** NT219 - Cryptography
 **Class:** NT219.Q11.ANTN
@@ -10,136 +10,130 @@
 | 2 | Nguyễn Văn Quốc Gia | 24520415 |
 
 ---
-## Overview
-- Currently, RSA remains one of the most widely used public-key algorithms, especially in TLS/SSL protocols, key exchange, and digital signatures. The security foundation of RSA encryption is based on the computational difficulty of factoring large integers into their prime factors. For classical computers, the most efficient known algorithm for this task is the General Number Field Sieve (GNFS).
-- However, this algorithm is still infeasible for keys of 2048 bits or larger. Therefore, if implemented correctly, RSA remains secure today. Nonetheless, threats to RSA are increasing. Some issues arise from implementation flaws or weak random number generators, causing many RSA keys to be compromised due to shared prime factors. In addition, side-channel attacks such as timing analysis, power consumption analysis, and electromagnetic radiation analysis can leak private keys in hardware environments.
-- Furthermore, the advent of quantum computers poses a major threat to RSA. Shor’s algorithm demonstrates that if a sufficiently large and stable quantum computer exists, factoring large integers—and thus breaking RSA—could be achieved in a practical amount of time.
+## Giới thiệu 
+- Hiện nay, RSA vẫn là một trong những thuật toán khóa công khai được sử dụng rộng rãi nhất, đặc biệt trong các giao thức TLS/SSL, trao đổi khóa và chữ ký số. Nền tảng an toàn của mã hóa RSA dựa trên độ khó tính toán của bài toán phân tích các số nguyên lớn thành các thừa số nguyên tố của chúng. Đối với máy tính cổ điển, thuật toán hiệu quả nhất hiện nay được biết đến cho bài toán này là General Number Field Sieve (GNFS).
+- Tuy nhiên, thuật toán này vẫn không khả thi đối với các khóa có độ dài 2048 bit hoặc lớn hơn. Do đó, nếu được triển khai đúng cách, RSA vẫn được xem là an toàn ở thời điểm hiện tại. Mặc dù vậy, các mối đe dọa đối với RSA đang **gia tăng**. Một số vấn đề phát sinh từ các lỗi trong quá trình **triển khai** hoặc từ các **bộ sinh số ngẫu nhiên yếu**, dẫn đến việc nhiều khóa RSA bị xâm phạm do dùng chung các thừa số nguyên tố. Ngoài ra, các tấn công kênh kề (**side-channel attacks**) như phân tích thời gian, phân tích mức tiêu thụ điện năng và phân tích bức xạ điện từ có thể làm rò rỉ khóa bí mật trong các môi trường phần cứng.
+- Hơn nữa, sự xuất hiện của **máy tính lượng tử** đặt ra một mối đe dọa lớn đối với RSA. **Thuật toán Shor** cho thấy rằng nếu tồn tại một máy tính lượng tử đủ lớn và ổn định, việc phân tích các số nguyên lớn — và do đó phá vỡ RSA — có thể được thực hiện trong một khoảng thời gian khả thi trên thực tế.
 
-Therefore, understanding **the underlying concepts** and **mathematical theories behind classic attacks on RSA** helps organizations assess risks and be more cautious when deploying RSA in their projects.
+Do đó, việc hiểu rõ **các khái niệm nền tảng** và **các lý thuyết đằng sau các tấn công lên RSA** giúp các tổ chức đánh giá rủi ro và thận trọng hơn khi triển khai RSA trong các dự án của mình.
 
-## I. Basic Theory of RSA and RSA-Based Signatures
 
-### 1. Basic Theory of RSA
-RSA encryption uses two keys: a public key and a private key (corresponding to the public key).  
-The public key is used for encryption and does not need to be kept secret, while the private key is used for decryption and must be kept secret.  
-This means that anyone who knows the public key can encrypt information, but only the owner of the private key can decrypt the ciphertext produced with the corresponding public key.
+## I. Lý thuyết cơ bản về RSA và chữ ký số RSA 
 
-#### Key Generation
-As is traditional in cryptography literature, in this article we use Alice and Bob to represent two people who want to communicate over the internet, while Eve is the “woman-in-the-middle,” i.e., someone who can eavesdrop on their conversation.
+### 1. Lý thuyết cơ bản về RSA 
 
-First, Alice generates the keys as follows:
-- Choose two large prime numbers $p$ and $q$
-- Compute $N = p \cdot q$
-- Compute $\phi(N) = (p - 1) \cdot (q - 1)$
-- Choose a positive integer $e$ such that:
-  - $e \in (1, \phi(N))$
-  - $\gcd(e, \phi(N)) = 1$
-- Compute $d$ such that $d \cdot e \equiv 1 \pmod{\phi(N)}$ (i.e., $d$ is the modular inverse of $e$ modulo $\phi(N)$)
+Mã hóa RSA sử dụng hai khóa: một khóa công khai và khóa bí mật(tương ứng với khóa công khai, tức một công khai thì chỉ có một khóa bí mật tương ứng). 
+Khóa công khai được sử dụng cho mã hóa và không cần phải giữ bí mật, trong khi khóa bí mật được dùng để giải mã và cần phải giữ bí mật. Tức là ai cũng có thể mã hóa thông tin nhưng chỉ có người sở hữu khóa bí mật tương ứng mới có thể giải mã những đoạn mã đó. 
 
-**The public key and private key are respectively:**
-- Public key: $(N, e)$
-- Private key: $(N, d)$
+#### Tạo key 
 
-After generating the keys, Alice sends the public key $(N, e)$ to Bob (note that Eve can read this message).
+Theo truyền thống trong lý thuyết mật mã, trong văn bản chúng tôi sử dụng Alice và Bob để nói về hai người muốn nói chuyện với nhau qua Internet, còn Eve là "woman-in-the-middle", tức là người có thể nghe lén cuộc trò chuyện của Alice và Bob 
 
-#### Encryption
-Bob wants to encrypt a message $M$:
-- Encode $M$ as an integer $m$
-- Use the public key $(N, e)$ to compute the **ciphertext**:  
-  $ct \equiv m^{e} \pmod{N}$
 
-At this point, the message $M$ has been encrypted into $ct$. Bob sends $ct$ to Alice.
+Đầu tiên, Alice tạo khóa với các bước như sau: 
+- Chọn hai số nguyên tố lớn $p$ và $q$
+- Tính $N = p \cdot q$
+- Tính $\varphi(N) = (p - 1) \cdot (q - 1)$
+- Chọn số nguyên dương $e$ thỏa: 
+    - $e \in (1, \varphi(N))$
+    - $\gcd(e, \varphi(N)) = 1$
+- Tính $d$ thỏa $d \cdot e \equiv 1 \pmod{\varphi(N)}$, tức $d$ là nghịch đảo module $\varphi(N)$ của $e$
 
-#### Decryption
-Alice receives the ciphertext $ct$ and decrypts it as follows:
-- Compute $m \equiv ct^{d} \pmod{N}$
-- Decode $m$ back to the original message $M$
+
+**Khóa công khai và khóa bí mật lần lượt là:**
+- Khóa công khai: $(N, e)$
+- Khóa bí mật: $(N, d)$
+
+Sau khi tạo khóa, Alice gửi khóa công khai $(N, e)$ đến Bob(chú ý rằng Eve có thể đọc được)
+
+#### Mã hóa 
+Bob muốn mã hóa message $M$: 
+- Encode $M$ thành số nguyên $m$
+- Sử dụng khóa công khai $(N, e)$ để tính ciphertext như sau: $ct \equiv m^{e} \pmod{N}$
+
+Lúc này, message $M$ được mã hóa thành $ct$. Bob gửi $ct$ cho Alice.
+
+#### Giải mã 
+Alice nhận ciphertext $ct$ và tiến hành giải mã nó như sau: 
+- Tính $m \equiv ct^{d} \pmod{N}$
+- Decode $m$ về message $M$
 
 ![image](https://hackmd.io/_uploads/HJ6EH86ngx.png)
 
 
 ##### Proof of Correctness
-Here, we will prove why under the conditions in the **decryption** section:  
-$$ct \equiv m^{e} \mod{N} \texttt{  implies  } m \equiv ct^{d} \mod{N}$$  
+Ở đây, ta sẽ chứng minh tại sao với các điều kiện trong phần **mã hóa** thì: 
+$$ct \equiv m^{e} \mod{N} \texttt{  suy ra  } m \equiv ct^{d} \mod{N}$$
+Có: $d \cdot e \equiv 1 \mod((p-1)\cdot(q-1))$
+=> $\left \{ {{d \cdot e \equiv 1 \mod{(p-1)}} \atop {d \cdot e \equiv 1 \mod(q-1)}} \right.$ 
 
-We have: $d \cdot e \equiv 1 \mod((p-1)\cdot(q-1))$  
-=> $\left \{ {{d \cdot e \equiv 1 \mod{(p-1)}} \atop {d \cdot e \equiv 1 \mod(q-1)}} \right.$  
+Xét $d \cdot e \equiv 1 \mod{(p-1)}$: 
+=> $d \cdot e=1+k\cdot(p-1)$
+=> $ct^{d}=(m^{e})^{d}=m^{e \cdot d}=m^{1+k\cdot(p-1)}=m\cdot (m^{p-1})^{k}\equiv m \mod{p}$ vì định lý **Fermat** bé( $a^{p-1} \equiv 1 \mod{p} \texttt{ với } gcd(a, p)=1$)
 
-Consider $d \cdot e \equiv 1 \mod{(p-1)}$:  
-=> $d \cdot e = 1 + k\cdot(p-1)$  
-=> $ct^{d} = (m^{e})^{d} = m^{e \cdot d} = m^{1+k\cdot(p-1)} = m \cdot (m^{p-1})^{k} \equiv m \mod{p}$ due to Fermat’s Little Theorem ($a^{p-1} \equiv 1 \mod{p}$ when $gcd(a, p)=1$).  
+Tương tự ta cũng có được: $ct^{d} \equiv m \mod{q}$
 
-Similarly, we also obtain: $ct^{d} \equiv m \mod{q}$  
-
-By the Chinese Remainder Theorem (CRT), we conclude:  
+Theo định lý CRT(Thặng dư Trung Hoa) ta suy ra: 
 $$
 ct^{d} \equiv m \mod{(p\cdot q=N)}
-$$  
-
-### 2. RSA-Based Digital Signatures
-In addition to encryption, RSA is also applied to digital signatures. The idea works similarly to encryption, but now the order of using the private key and public key is reversed.  
-
-Suppose Alice wants to send Bob a document along with her signature. In this case, Alice keeps a private key $(N, d)$, while Bob holds the corresponding public key $(N, e)$.  
-
-- Alice computes the hash value of the entire document she wants to send, denoted as $hash$.  
-- The digital signature of the document Alice wants to send is calculated as: $sig \equiv hash^{d} \mod{N}$.  
-- Alice sends the document together with the computed digital signature.  
-- When Bob receives it, he computes $hash \equiv sig^{e} \mod{N}$, then calculates the hash value of the received document. If this value matches $hash$, it proves that the sender knows Alice’s private key and that the document has not been altered during transmission.
-### 3. RSA Optimizations  
-#### 3.1. Time Complexity Drawbacks of RSA  
-Let’s consider the time complexity of computing $a^{b} \mod{N}$ where $a, b, N$ are large integers:  
-- To compute the exponentiation $a^{b}$, we usually use the **square-and-multiply** algorithm with time complexity $O(\log(b))$. Note that this complexity does not yet account for the cost of integer multiplication.  
-- Computing $a \cdot a \mod{N}$ can be done with various algorithms, but the most efficient known complexity is about $O(n\log(n))$, where $n$ is the bit length of $N$. Since $N$ is a large integer, $n$ is also large.  
-
-Thus, the overall time complexity of computing $a^{b}$ is $O(\log(b) \cdot n\log(n))$, where $n$ is the bit length of $a$.  
-
-We often choose $e = 65537 = 2^{16}+1$ because:  
-- $e$ still satisfies the property $1 < e < N$ and $gcd(e, \phi(N)) = 1$. (Note that $65537$ is a prime number, so we only need to ensure that $65537 \nmid (p-1)$ and $65537 \nmid (q-1)$ when choosing $p$ and $q$).  
-- $\log(65537) \approx 5$, which is very small.  
-
-Therefore, the encryption step (computing $m^{e} \mod{N}$) is very fast, which explains why $e=65537$ is commonly chosen.  
-
-However, when it comes to decryption, we must consider the following:  
-- $d$ is not chosen beforehand but is instead dependent on $e=65537$ and $\phi(N) = (p-1)\cdot(q-1)$, since $d \equiv e^{-1} \mod{\phi(N)}$.  
-- Because of this, $d$ is usually very large, with $d \approx \phi(N) = p \cdot q - p - q + 1 \approx N$.  
-
-As a result, the decryption time in RSA is often quite large, which motivates the introduction of **RSA-CRT**.  
-
-#### 3.2. RSA-CRT  
-RSA-CRT applies the Chinese Remainder Theorem (CRT) to optimize decryption time, specifically as follows:  
-- **Key generation**:  
-  - Compute $d_{p} \equiv e^{-1} \mod (p-1)$  
-  - Compute $d_{q} \equiv e^{-1} \mod (q-1)$  
-- **Encryption**: Same as standard RSA, $ct \equiv m^{e} \mod{N}$  
-- **Decryption**:  
-  - Compute $m_p \equiv ct^{d_{p}} \mod{p}$  
-  - Compute $m_q \equiv ct^{d_{q}} \mod{q}$  
-  - Solve the following system of congruences using CRT:  
-    - $\left \{ {{m \equiv m_p \mod{p}} \atop {m \equiv m_q \mod{q}}} \right.$  
-  - The solution $m \mod (p\cdot q = N)$ is the plaintext.  
-
-**Analyzing the time complexity of RSA-CRT:** RSA-CRT splits decryption into two computations of the form $a^{b} \mod{M}$, but in each case the modulus $M$ is much smaller compared to the single computation in standard RSA (since $d_p \approx p \approx \sqrt{N}$).  
-
-However, implementing RSA-CRT requires careful consideration because it may introduce certain security weaknesses that attackers can exploit. These issues will be discussed further in the section **Fault Attacks on RSA-CRT**.  
-
-### 4. The Core Problem in RSA
-The fundamental problem in RSA is:  
-> Solve the hidden congruence equation for $x$:  
 $$
-x^{e} \equiv ct \mod{N}
-$$  
-where $N$ is the product of two prime numbers and $gcd(e, \phi(N))=1$.  
+### 2. Chữ ký số RSA 
+Ngoài mục đích mã hóa, RSA còn được ứng dụng cho chữ ký số. Cách hoạt động của nó như sau về ý tưởng cũng giống như mã hóa thông tin nhưng bây giờ thứ tự sử dụng private key và public key là ngược lại. 
+Giả sử Alice muốn gửi cho Bob một đoạn văn bản kèm theo chữ ký của mình. Trong trường hợp này, Alice giữ cho mình một private key $(N, d)$, còn Bob giữ public key $(N, e)$ tương ứng. 
+- Alice tính giá trị băm của toàn bộ văn bản muốn gửi đi, gọi giá trị băm này là $hash$ 
+- Chữ ký số của văn bản Alice muốn gửi đi được tính như sau: $sig \equiv hash^{d} \mod{N}$
+- Alice gửi đi văn bản muốn gửi kèm theo chữ ký số được tính ở trên 
+- Khi Bob nhận được, Bob tính $hash \equiv sig^{e} \mod{N}$, sau đó tính giá trị băm của văn bản nhận được, nếu giá trị này trùng với $hash$ thì người gửi biết private key của Alice và văn bản không bị thay đổi từ lúc gửi đến khi Bob nhận. 
+### 3. RSA optimizations 
+#### Nhược điểm thời gian của RSA
+Ta xét độ phức tạp thời gian của việc tính $a^{b} \mod{N}$ với $a, b, N$ là các số nguyên lớn: 
+- Để tính lũy thừa $a^{b}$, ta thường sử dụng thuật toán **square-and-multiply** với độ phức tạp $O(log(b))$, chú ý độ phức tạp này chưa tính độ phức tạp thời gian của việc nhân hai số nguyên. 
+- Tính $a \cdot a \mod{N}$ có nhiều thuật toán, nhưng độ phức tạp hiệu quả nhất hiện tại là tầm $O(nlog(n))$ với $n$ là số bits của $N$, chú ý khi $N$ là số nguyên lớn, dẫn đến số bits $n$ của $N$ là lớn
 
-To **completely** **break** RSA, one needs to solve the above problem in a practical amount of time.  
-Currently, the most efficient method to solve it is to factorize the large integer $N$ (in RSA, this is the modulus). If we can factorize $N$, we obtain $p$ and $q$, and then compute $\phi(N) = (p-1)\cdot(q-1)$. From this, the private key can be derived: $d \equiv e^{-1} \mod{\phi(N)}$. Once $d$ is known, the solution to the equation is simply:  
+Suy ra: độ phức tạp thời gian toàn bộ của việc tính $a^{b}$ là $O(log(b)\cdot n log(n))$ với $n$ là số bits biểu diễn của $a$
+Ta thường chọn $e=65537=2^{16}+1$ vì khi đó: 
+- $e$ vẫn thỏa tính chất $1<e<N$ và $gcd(e, \varphi(N))=1$ (chú ý $65537$ là số nguyên tố nên điều ta cần chỉ là chọn $p$, $q$ sao cho $65537\nmid p-1$ và $65537\nmid q-1$)
+- $log(65537)\approx5$, rất nhỏ 
+
+Suy ra, việc mã hóa(tức tính $m^{e} \mod{N}$) sẽ rất nhanh, đó cũng là lý do ta thường chọn $e=65537$
+Tuy nhiên, khi xét đến giải mã, ta cần quan tâm những điều sau: 
+- $d$ thường không được chọn trước và thường phụ thuộc vào $e=65537$ và $\varphi(N)=(p-1).(q-1)$  $(d\equiv e^{-1} \mod{\varphi(N)})$
+- Vì lí do trên do trên, $d$ thường rất lớn, $d\approx phi(N)=p \cdot q-p-q+1 \approx p \cdot q=N$ 
+
+Vì thế, thời gian giải mã trong mã hóa RSA thường khá lớn, dẫn đến sự ra đời của **RSA-CRT** 
+#### RSA-CRT 
+RSA-CRT áp dụng the Chinese Remainder Theorem (CRT) để tối ưu thời gian trong việc giải mã, cụ thể như sau: 
+- Tạo key: 
+    - Tính $d_{p}\equiv e^{-1} \mod p-1$
+    - Tính $d_{q}\equiv e^{-1} \mod q-1$
+- Mã hóa: giống như RSA bình thường, $ct\equiv m^e \mod{N}$
+- Giải mã: 
+    - Tính $m_p\equiv ct^{d_{p}} \mod{p}$
+    - Tính $m_q\equiv ct^{d_{q}} \mod{q}$
+    - Giải hệ phương trình đồng dư sau bằng CRT: 
+        - $\left \{ {{m\equiv m_p \mod{p}} \atop {m\equiv m_q \mod{q}}} \right.$
+    - Nghiệm $m \mod (p\cdot q=N)$ của hệ phương trình trên chính là plaintext 
+    
+Phân tích độ phức tạp thời gian của RSA-CRT, RSA-CRT chia việc giải mã thành 2 lần tính $a^b \mod {M}$ nhưng trong mỗi phép tính, modulo M nhỏ hơn khá nhiều so với tính trong một phép tính($d_p \approx p \approx \sqrt{N}$). 
+
+Tuy nhiên, việc triển khai RSA-CRT cần có nhiều lưu ý vì có thể gây ra nhiều nhược điểm bảo mật mà kẻ tấn công có thể khai thác, điều này sẽ được nói rõ hơn trong phần **Faul attacks on RSA-CRT**
+
+### 4. Bài toán trong RSA 
+Bài toán cốt lỗi trong RSA là:
+> Giải phương trình đồng dư ẩn $x$: 
 $$
-x = ct^{d} \mod{N}
-$$  
+x^{e} \equiv ct \mod{N} 
+$$
+với $N$ là tích của hai số nguyên tố và $gcd(e, \varphi(N))=1$
 
-***Therefore***: Keeping $p$ and $q$ secret is fundamental in RSA encryption—this is just as important as keeping $d$ secret. Many cryptographic attacks on RSA focus on recovering $p$ and $q$.
-## II. Các class attack phổ biến 
-### 1. Factoring 
-> Lớp tấn công này dựa trên một ý tưởng rất tự nhiên rằng tìm một thuật toán mạnh để factoring số nguyên lớn $N$. 
+Để phá mã **toàn bộ** RSA thì cần phải giải được bài toán trên trong một thời gian thực tế 
+Hiện nay, cách tối ưu nhất để giải bài toán trên là phân tích thừa số nguyên tố của số nguyên lớn(trong trường hợp RSA thì là $N$), nếu ta phân tích được thừa số nguyên tố của $N$ thì ta sẽ có được $p$ và $q$, lúc này tính được $\varphi(N)=(p-1)\cdot (q-1)$, từ đó tính được Private Key: $d\equiv e \mod{\varphi(N)}$. Khi đó, nghiệm $x$ cần tìm là $x=ct^{d} \mod{N}$
+
+***Vì vậy:*** Việc giữ bí mật $p$ và $q$ là tiên quyết trong mã hóa RSA, việc này cũng quan trọng như việc giữ bí mật $d$. Rất nhiều cuộc tấn công mã hóa RSA đều nhắm vào việc tìm được $p$ và $q$ 
+## II. Các lớp tấn công phổ biến 
+### 1. Math 
+> Lớp tấn công này tấn công vào mặt toán học của RSA nếu như key có dạng đặc biệt hoặc không được triển khai đúng. 
+#### 1.1. Factoring 
 
 Hiện nay có nhiều thuật toán dùng để factoring N ra đời, một trong những ý tưởng được sử dụng nhiều là: 
 > Tìm hai số nguyên $a$ và $b$ thỏa mãn $a^2 \equiv b^2 \mod N$ và $a \ne \pm b \mod N$
@@ -161,13 +155,17 @@ $$
 
 Với thuật toán này, số nguyên $N$ $512$ bits có thể bị factoring chỉ trong vài giờ, số nguyên $N$ $1024$ bits thì bị factoring trong nhiều năm. Hiện nay, nhiều hệ thống sử dụng RSA $2048$ bits. Tuy nhiên, với khả năng về sự xuất hiện máy tính lượng tử trong nhiều năm tới thì khuyến nghị cần phải sử dụng $RSA$ $3072$ bits để an toàn.
 
-Thuật toán Shor là một thuật toán lượng tử giúp phân tích nhân tử một số nguyên ở dạng $N = p.q$, với $p$ và $q$ là các số nguyên tố. Trong lý thuyết thì nếu đủ qubit thì bất kì RSA nào cũng có thể bị phá bằng thuật toán Shor này.
+Tuy nhiên, nếu như hai thừa số nguyên tố $p$ và $q$ có dạng đặc biệt thì có thể factoring $N=pq$ nhanh hơn rất nhiều so với **GNFS**. 
+Ví dụ, nếu như $p$ là số nguyên tố thỏa $p-1$ là một smooth number(là số có tất cả các ước nguyên tố của nó đều nhỏ) thì thuật toán **Pollard** $p-1$ sẽ factoring $N$ rất nhanh so với **GNFS**
 
-### 2. Key generation weakness
-> Lớp tấn công này nhắm vào những trường hợp đặc biệt của key 
-#### 2.1. Wiener (1990) on small private exponent attack.
+Vì thế, khi sinh số nguyên tố ngẫu nhiên cần kiểm tra để tránh các trường hợp đặc biệt này. 
 
-##### Nhắc lại công thức RSA
+Thuật toán Shor là một thuật toán lượng tử giúp phân tích nhân tử một số nguyên ở dạng $N = p.q$, với $p$ và $q$ là các số nguyên tố. Trong lý thuyết thì nếu **đủ qubit** thì bất kì RSA nào cũng có thể bị phá bằng thuật toán Shor này.
+
+#### 1.2. Key generation weakness
+##### 1.2.1. Wiener on small private exponent attack.
+
+###### Nhắc lại công thức RSA
 
 RSA có: 
 * $( n = p \cdot q )$
@@ -176,7 +174,7 @@ RSA có:
 
 Nghĩa là: $e \cdot d = 1 + k\varphi(n)$,  với $k$ là số nguyên dương.
 
-##### Khi d quá nhỏ
+###### Khi d quá nhỏ
 
 Nếu d nhỏ, tức là: $d < n^{0.25} / 3$ thì **Wiener (1990)** chứng minh rằng có thể **tính lại d** từ **(e, n)** bằng **[phân số liên tục (continued fractions)](https://vi.wikipedia.org/wiki/Li%C3%AAn_ph%C3%A2n_s%E1%BB%91)**.
 
@@ -188,7 +186,7 @@ $$
 $$
 * Từ đó, kẻ tấn công có thể dùng **phân số liên tục (continued fraction)** để tìm xấp xỉ của $e/n$, thử các cặp $(k_i, d_i)$ để tìm ra $d$ thật sự.
 
-##### Hậu quả
+###### Hậu quả
 
 Nếu tìm được $d$, thì:
 
@@ -196,13 +194,13 @@ Nếu tìm được $d$, thì:
 * Hoặc **ký giả mạo** các thông điệp RSA-signature hợp lệ.
 
 
-##### Nguyên nhân thực tế có thể dẫn đến “d nhỏ”
+###### Nguyên nhân thực tế có thể dẫn đến “d nhỏ”
 
 * Hệ thống cố ý chọn $d$ nhỏ để **tăng tốc giải mã** (vì giải mã = $c^d \mod n$ ).
 * Hoặc chọn $e$ quá lớn → khiến $d$ nhỏ do $e \cdot d ≡ 1 \pmod{\varphi(n)}$.
 
 
-##### Biện pháp phòng tránh
+###### Biện pháp phòng tránh
 
 * Không bao giờ chọn $d < n^{0.25}$.
 * Thực tế, hầu hết các hệ thống dùng:
@@ -212,19 +210,11 @@ Nếu tìm được $d$, thì:
 * Hoặc dùng **RSA-CRT**, **RSASSA-PSS** để cải thiện tốc độ mà vẫn an toàn.
 
 
-<!-- Nếu $d$ thực sự nhỏ (thỏa điều kiện Wiener), thì có thể **phục hồi được d trong vài giây**.
-
 ---
 
-**Tóm lại:**
+##### 1.2.2. Håstad’s attack on low exponents and common modulus scenarios
 
-> Khi $d$ nhỏ, RSA không còn an toàn — có thể bị tấn công bằng Wiener’s Attack vì mối quan hệ tuyến tính giữa $e/n$ và $k/d$. -->
-
----
-
-#### 2.2. Håstad’s attack on low exponents and common modulus scenarios
-
-##### Bối cảnh
+###### Bối cảnh
 
 RSA mã hóa một thông điệp $m$ thành:
 
@@ -238,7 +228,7 @@ và $n = pq$ là modulus.
 Håstad’s Broadcast Attack tấn công vào điểm yếu sau: 
 > Nếu e đủ nhỏ làm cho $m^e<n$ thì khi đó việc $\mod n$ trong $c=m^e \mod n$ không còn tác dụng, suy ra $m = \sqrt[e]{c}$
 
-##### Håstad’s Broadcast Attack (1985)
+###### Håstad’s Broadcast Attack
 
 **Giả định:**
 
@@ -266,9 +256,8 @@ $$
 
 **Kết quả:** attacker có thể khôi phục plaintext mà **không cần khóa bí mật**.
 
-##### Common Modulus Attack
+###### Common Modulus Attack
 
-Là biến thể khác của Håstad:
 
 * Hai người dùng có **cùng modulus $n$** (do bị cấu hình sai hoặc chia sẻ cùng HSM).
 * Nhưng dùng **khóa công khai khác nhau**: $e_1, e_2$
@@ -295,7 +284,7 @@ $$
 Nếu $b < 0$, giả sử $b=-k(k>0)$, ta tính $c_2^{b} \equiv (c_2^{-1})^{k} \mod n$ (với $c_2^{-1} \mod n$ là nghịch đảo module $n$ của $c_2$)
 **Kết quả:** attacker khôi phục $m$ mà không cần giải RSA.
 
-##### Biện pháp phòng tránh
+###### Biện pháp phòng tránh
 
 * **Không dùng RSA raw**, luôn thêm padding ngẫu nhiên như **OAEP**:
     - Khi đó $m$ được tăng lên gần với $n$, hạn chế hoàn toàn khả năng $m^e<n$. 
@@ -305,63 +294,139 @@ Nếu $b < 0$, giả sử $b=-k(k>0)$, ta tính $c_2^{b} \equiv (c_2^{-1})^{k} \
 
 ---
 
-### 3. Implementation Attack 
-> Lớp tấn công này này không tấn công trực tiếp vào tính toán học của RSA, thay vào đó nó nhắm vào những lỗi triển khai có thể xảy ra 
+### 2. Padding/ CCA(Chosen ciphertext attack) 
+> Lớp tấn công này này tấn công vào một số padding scheme trên RSA và việc cày đặt lỗi dẫn đến để lộ oracle để attacker có thể thực hiện Chosen Ciphertext Attack 
 
-#### 3.1. Bleichenbacher on PKCS#1 v1.5 padding oracle attack
+#### 2.1. Bleichenbacher on PKCS#1 v1.5 padding oracle attack
 
 ##### Tổng quan ngắn
 
-Bleichenbacher (1998) là cuộc tấn công **adaptive chosen-ciphertext** nhắm vào chuẩn **PKCS#1 v1.5** của RSA.
-Điểm mấu chốt không nằm ở toán học phức tạp, mà ở việc:
-
-> **Hệ thống vô tình để lộ thông tin “padding có hợp lệ hay không” sau khi giải mã RSA.**
-
-Chỉ với một phản hồi **Yes / No** (hoặc tương đương), attacker có thể:
-
-* Gửi nhiều ciphertext được “biến hình” từ ciphertext gốc.
-* Quan sát phản hồi của server.
-* Từng bước **thu hẹp không gian giá trị của plaintext**.
-* Cuối cùng **khôi phục hoàn toàn message gốc** (ví dụ: session secret trong TLS).
-
-Điều này có nghĩa là:
-
-* RSA **vẫn đúng về mặt toán học**,
-* Nhưng **PKCS#1 v1.5 + xử lý lỗi không an toàn** khiến RSA **mất hoàn toàn tính bảo mật** trong kịch bản thực tế.
+Bleichenbacher (1998) là cuộc tấn công **padding-oracle** nổi tiếng nhắm vào chuẩn **PKCS#1 v1.5** cho RSA (dùng trong nhiều giao thức cũ như SSL/TLS). 
+Ý tưởng chính: nếu bạn có **oracle** trả lời cho bạn biết “sau khi giải được (RSA-decrypt), padding có hợp lệ theo PKCS#1 v1.5 hay không” (yes/no), thì bằng cách gửi nhiều ciphertext tùy chỉnh bạn có **lần lượt rút hẹp khoảng giá trị** của plaintext gốc và cuối cùng phục hồi toàn bộ thông điệp — tất cả mà không cần biết khóa riêng.
 
 
-##### Bản chất lỗ hổng của PKCS#1 v1.5 
+##### PKCS#1 v1.5 
 
-PKCS#1 v1.5 định nghĩa một cấu trúc padding rất cứng nhắc:
+Khi RSA dùng cho mã hóa theo PKCS#1 v1.5, plaintext (M) trước khi mã hóa có dạng:
 
 ```
-0x00 || 0x02 || PS || 0x00 || D
+EM = 0x00 || 0x02 || PS || 0x00 || D
 ```
 
-Vấn đề nằm ở chỗ:
+* 0x02 chỉ ra chế độ mã hóa (khác với 0x01 cho signatures),
+* PS(padding string) là một chuỗi padding ngẫu nhiên (ít nhất 8 byte, không chứa byte 0x00),
+* `D` là dữ liệu/khóa (message) thực sự.
 
-- Sau khi RSA-decrypt, hệ thống **bắt buộc phải kiểm tra padding**.
-- Quá trình kiểm tra này thường:
-  - Trả về **lỗi khác nhau** (explicit error),
-  - Hoặc **thời gian xử lý khác nhau** (implicit error).
-Chỉ cần attacker phân biệt được:
-- “Padding đúng” vs “Padding sai”
-  → hệ thống đã trở thành **padding oracle**.
+Một plaintext/ciphertext được gọi là **PKCS conforming** khi nó thỏa đủ 3 yêu cầu sau: 
+- 2 byte đầu tiên của plaintext tương ứng lần lượt là `0x00` và `0x02`
+- Byte thứ 3 đến byte 10 không được là byte `0x00` 
+- Tồn tại ít nhất một byte nằm sau byte thứ 10 là byte `0x00`
 
-##### Vì sao Bleichenbacher nguy hiểm trong triển khai RSA?
+##### Một số tính chất toán học dùng trong tấn công
+Gọi $k$ là số bytes biểu diễn của $n$
+Đầu tiên ta sẽ nói về một số tính chất toán học sẽ được dùng trong tấn công này: 
+###### Tính chất 1
+> Với $s$ bất kì thì: Nếu $c=m^e\mod n$ thì plaintext tương ứng với ciphertext $c'=c\cdot s^e\mod n$ là $m'=m \cdot s \mod n$
+> 
+Thật vậy: 
+$$
+(c')^d\equiv (c\cdot s^e)^d\equiv c^d \cdot s^{ed}=m \cdot s \mod n 
+$$
+###### Tính chất 2
+> Nếu plaintext m thỏa PKCS conforming thì: 
+$$
+2B\leq m \mod n\leq3B-1 \text{ với } B=2^{8(k-2)}
+$$
 
-Bleichenbacher không phá RSA trực tiếp, nhưng:
-- Cho phép **giải mã dữ liệu mà attacker không được phép giải mã**.
-- Đặc biệt nguy hiểm với:
-  - TLS handshake (Pre-Master Secret).
-  - Session keys (16–32 bytes).
-  - Token, API secrets.
+Chú ý: việc đặt $B=2^{8(k-2)}$ sẽ được sử dụng xuyên suốt trong phần này 
 
-Trong thực tế:
-- Không cần tấn công toàn bộ message,
-- Chỉ cần lấy được **session key**, attacker có thể giải mã toàn bộ traffic đối xứng phía sau.
+##### Ý tưởng tấn công 
+Ý tưởng của Bleichenbacher on PKCS#1 v1.5 padding oracle attack như sau: 
+Lần lượt tìm $s$ thỏa $c \cdot s^e$ là một ciphertext PKCS conforming 
+→ $2B\leq ms \mod n\leq3B-1$
+→ Tồn tại số nguyên $r$ thỏa: $2B\leq ms-rn\leq3B-1$
+→ $\frac{2B+rn}{s} \leq m \leq \frac{3B-1+rn}{s}$
 
-Nhiều hệ thống từng vá lỗi bằng cách giấu thông báo lỗi hay thay đổi message trả về. Nhưng điều này **không đủ**, vì oracle **có thể tồn tại gián tiếp** (ví dụ qua timing).
+Suy ra, ta giới hạn lại $m$ chỉ còn thuộc một khoảng nhất định.
+
+Ứng với mỗi $s$ tìm được, ta sẽ tiếp tục giới hạn lại khoảng có thể có của $m$(kết hợp với các khoảng ta đã tìm được trước đó) cho đến khi khoảng có thể có của $m$ chỉ còn là $[a, a]$, khi đó ta tìm được $m=a$
+
+Tuy nhiên, để **tối ưu số lần query gửi đến oracle**, ta cần một cách chọn $s$ hiệu quả để khả năng bắt gặp $s$ thỏa $c \cdot s^e$ là một ciphertext PKCS conforming là cao nhất.
+##### Thuật toán tấn công 
+Gọi $c_0$ là ciphertext mà ta cần tấn công, $m_0$ là plaintext mà ta cần tìm
+Gọi $M_i$ là biến lưu tập hợp của những khoảng có thể chứa $m_0$ sau khi tìm được $s_i$ thỏa mãn 
+###### Bước 1: Tìm $s_i$ thỏa mãn $c_0(s_i)^e$ là một ciphertext thỏa PKCS conforming 
+Để tối ưu số lần query gửi đến oracle, tấn công này chia thành 3 trường hợp, mỗi trường hợp có một chiến thuật tìm $s_i$ khác nhau 
+**a. Nếu $i=1$**
+> Tìm số nguyên nhỏ nhất $s_1\geq \frac{n}{3B}$ thỏa ciphertext $c_0(s_1)^e$ là PKCS conforming 
+
+Giải thích lí do: 
+Nếu $s_1< \frac{n}{3B}$ 
+→ $m_0\cdot s_1<3B \cdot \frac{n}{3B}=n$(chú ý $m_0$ là plaintext PKCS conforming nên $2B\leq m_0<3B$)
+→ Khi đó: việc $\mod n$ không có tác dụng 
+→ $2B\leq m_0\cdot s_1<3B$ **(*)** 
+Tuy nhiên điều này là không thể vì với $s_1>=2$ và $2B\leq m_0<3B$ dẫn đến $m_0\cdot s_1\geq4B>3B$, ngược với lại **(*)**
+
+Suy ra, nếu $s_1< \frac{n}{3B}$ thì $c_0(s_1)^e$ không thể là ciphertext PKCS conforming, vì thế $\frac{n}{3B}$ là mốc đầu tiên ta dùng để bắt đầu tìm $s_1$
+
+**b. Nếu $i>1$ và $M_i$ chứa nhiều hơn 1 khoảng**
+> Tìm $s_i$ nhỏ nhất $>s_{i-1}$ thỏa ciphertext $c_0\cdot s_i^e$ là PKCS conforming 
+
+Ta lần lượt tìm $s_i$ tăng dần để tránh chọn lại những $s$ thỏa mãn ta đã chọn trước đó 
+
+**c. Nếu $i>1$ và $M_i$ chỉ chứa một khoảng $[a, b]$**
+
+Lúc này, khi biết $m_0$ chỉ có thể nằm trong khoảng $[a, b]$, ta có chiến thuật chọn $s_i$ khác để khả năng ciphertext $c_0 \cdot s^e$ thỏa PKCS conforming là cao 
+
+Ta cần tìm $s_i$ và $r_i$ thỏa mãn $2B\leq m_0s_i-r_in\leq3B-1$, chú ý bây giờ ta đã biết được $a\leq m_0\leq b$
+Cố định $r_i$, từ hai bất đẳng thức trên ta suy ra được $\frac{2B+r_in}{b}\leq s_i\leq \frac{3B+r_in}{a}$ (thường thì khoảng này khá nhỏ)
+
+Để $s_i\geq s_{i-1}+1$ thì điều kiện đủ là $s_{min}(r)\geq s_{i-1}+1$
+Suy ra: $\frac{2B+r_in}{b}\geq s_{i-1}+1$
+→ Biến đổi bất đẳng thức trên, ta được $r_i\geq\frac{b(s_{i-1}+1)-2B}{n}$
+
+> Tìm $s_i$ và $r_i$ thỏa mãn: 
+> - $r_i\geq\frac{b(s_{i-1}+1)-2B}{n}$
+> - $\frac{2B+r_in}{b}\leq s_i\leq \frac{3B+r_in}{a}$ (thường thì khoảng này khá nhỏ)
+###### Bước 2: Thu hẹp $M_i$
+
+> Sau khi $s_i$ được tìm thấy, tập $M_i$ được tính như sau
+$$
+M_i \leftarrow \bigcup_{(a,b,r)} \left\{ \left[\; \max\!\Big(a,\; \left\lceil\frac{2B + r n}{s_i}\right\rceil\Big),\; \min\!\Big(b,\; \left\lfloor\frac{3B - 1 + r n}{s_i}\right\rfloor\Big)\right]\; \right\}
+$$
+với mọi $([a,b]\in M_{i-1})$ và mọi $r$ thỏa
+$$
+\left\lceil\frac{a s_i - 3B + 1}{n}\right\rceil \le r \le \left\lfloor\frac{b s_i - 2B}{n}\right\rfloor.
+$$
+
+**Giải thích ngắn:**  
+Với mỗi khoảng $[a,b]$ trong $M_{i-1}$ và mỗi giá trị nguyên $r$ trong đoạn trên, ta xét khoảng nguyên
+
+$$
+\left[\left\lceil\frac{2B + r n}{s_i}\right\rceil,\; \left\lfloor\frac{3B - 1 + r n}{s_i}\right\rfloor\right]
+$$
+
+và lấy giao của nó với $[a,b]$. Tập hợp tất cả các giao không rỗng thu được chính là $M_i$.
+
+###### Bước 3: Tính kết quả 
+- Nếu $M_i$ chỉ còn chứa một khoảng $[a, a]$ thì $m_0$ cần tìm chính là $a$
+- Ngược lại, quay về bước 1 
+
+##### Áp dụng Bleichenbacher's Attack trong chữ kí số 
+Bây giờ ta nói về việc phân tích áp dụng **Bleichenbacher's Attack** vào việc chữ kí số RSA như sau: 
+> Attacker cần kí một message có hash là $h$. 
+> Tức vấn đề bây giờ đặt ra là: liệu attacker có thể tìm được $h^d$ nếu attacker có một oracle cho phép nhận biết một ciphertext có là PKCS conforming hay không.
+
+Câu trả lời là có 
+Để tìm $h^d$, attacker thực hiện như sau: 
+- Tìm $s_0$ thỏa $hs_0^e$ là một ciphertext PKCS conforming 
+- Đặt $c_0=hs_0^e \mod n$
+- Thực hiện Bleichenbacher's Attack như trên → attacker tìm được $c_0^d=(hs_0^e)^d=h^d\cdot s_0^{ed}=h^d \cdot s_0 \mod n$
+- Attacker tính $h^d=c_0^d\cdot s_0^{-1} \mod n$ với $s_0^{-1} \mod n$
+ là nghịch đảo module $n$ của $s_0$
+ 
+ > Trong ngữ cảnh chữ ký số thì khó có khả năng tồn tại oracle cho phép nhận biết một ciphertext có là PKCS conforming hay không. Vì thế nên nhìn chung việc sử dụng chữ ký số RSA-PKCS#1 v1.5 không nguy hiểm như RSA-PKCS#1 v1.5 key exchange
+
 
 ##### Ý nghĩa thực tiễn
 
@@ -375,17 +440,6 @@ Chuẩn PKCS#1 v1.5:
 - Không đảm bảo an toàn trong mô hình CCA.
 - Và **không thể sửa triệt để chỉ bằng vá lỗi triển khai**.
 
-##### Áp dụng vào chữ ký số
-
-Nếu cùng một logic kiểm tra “PKCS conforming” được dùng cho:
-- RSA decryption
-- hoặc RSA signature verification.
-
-thì attacker có thể:
-
-* Dùng oracle để suy ra giá trị liên quan đến $m^d$,
-* Dẫn đến **giả mạo chữ ký** trong một số kịch bản triển khai sai.
-
 ##### Giải pháp
 
 1. **Ngưng sử dụng PKCS#1 v1.5 cho mã hóa**:  Dùng **RSA-OAEP** (được chứng minh an toàn trong mô hình CCA).
@@ -395,7 +449,7 @@ thì attacker có thể:
    - Không phân biệt lỗi.
    - Không để lộ bất kỳ oracle nào (kể cả gián tiếp).
 
-#### 3.2. Marvin’s Attack
+#### 2.2. Marvin’s Attack
 
 ##### Tổng quan
 
@@ -470,7 +524,44 @@ Marvin’s Attack khẳng định rằng:
 - Không sử dụng RSA để mã hóa session key trong giao thức mới.
 - Ưu tiên (EC)DHE trong TLS hiện đại.
 
-#### 3.3. RSA-CRT Fault Attack 
+#### 2.3 Manger Attack 
+Tấn công này nhắm vào RSA-OAEP nếu không được cấu hình đúng và để lộ oracle. 
+##### Padding OAEP 
+Cấu trúc của padding OAEP có thể được tóm tắt như sau:
+```
+EM = 0x00||maskedSeed||maskedDB
+```
+- `DB = llHash||PS||0x01||M` với `M` là Message 
+- `seed` là chuỗi random 
+- `maskedDB = DB ⊕ MGF1(seed)`
+- `maskedSeed = seed ⊕ MGF1(DB)`
+
+> Manger Attack chỉ nhắm vào một điểm trong cấu trúc này chính là EM phải được bắt đầu bằng byte 0x00
+
+##### Ý tưởng tấn công 
+Gọi $k$ là số bytes biểu diễn của modulus 
+
+Điều kiện để thực hiện tấn công là một oracle cho phép nhận ciphertext C và trả lời byte đầu tiên của plaintext tương ứng có phải là `0x00` hay không. 
+(điều này xảy ra khi cấu hình việc verify không đúng: phân biệt lỗi padding trả về)
+
+Rõ hơn, oracle phải cho attacker biết liệu plaintext $y$ (sau RSA decrypt) là: $y<B$ hay $y>=B$ với $B = 2^{(8·(k−1))}$
+
+**Nhắc lại:** với $m$ là plaintext tương ứng của ciphertext $c$ thì plaintext tương ứng với ciphertext $s^ec$ là $ms$
+
+**Ý tưởng của manger attack để tìm plaintext $m$ tương ứng với ciphertext $c$**: 
+- Giả sử đã biết được $m\in [a, b]$
+- Với mỗi $s$, cho biết $ms<B$ hoặc $ms>=B$: 
+    - Nếu $ms<B$, suy ra $m<B/s$
+    - Nếu $ms>=B$, suy ra $m>=B/s$
+- Cứ như thế, attacker giới hạn lại giá trị có thể có của $m$ cho đến khi $a==b$, khi đó tìm được $m=a$
+
+##### Kết luận 
+Nếu implementation RSAES-OAEP leak thông tin phân biệt trong quá trình giải mã, một attacker có thể tận dụng oracle dạng “plaintext nhỏ hơn B hay không” để dần phục hồi plaintext gốc m thông qua **Manger attack** chỉ trong khoảng vài nghìn truy vấn.
+
+### 3. Fault attack
+> Lớp tấn công này nhắm vào việc cố ý gây ra lỗi trên các thiết bị phần cứng để rò rỉ thông tin bí mật. 
+> Trong RSA, có một tấn công điển hình cho lớp tấn công này là RSA-CRT Fault Attack. 
+#### 3.1. RSA-CRT Fault Attack 
 ##### Nhắc lại RSA-CRT 
 Như đã nói ở phần trên, RSA-CRT thường được áp dụng để giảm thời gian giải mã hoặc ký so với RSA mặc định: 
 - **Key generation**:  
@@ -503,7 +594,9 @@ Trong thực tế, Attacker có nhiều cách để gây lỗi trên các hệ t
 Một giải pháp đơn giản nhưng hiệu quả để chống lại Boneh-DeMillo-Liton Fault Attack là **Verify After Sign**: Sau khi tính được chữ ký $S$, kiểm tra $S^e \equiv h \mod N$, nếu đúng thì mới trả về $S$
 
 Thực tế có nhiều loại Fault Attack tấn công trên RSA-CRT và muốn an toàn thì cần kết hợp nhiều giải pháp lại với nhau chứ không chỉ thực hiện mỗi **Verify After Sign**
-#### 3.4. Timing Attack on RSA 
+### 4. Side-channels Attack 
+> Lớp tấn công này khai thác các thông tin rò rỉ vật lý hoặc hành vi phụ của hệ thống trong quá trình thực thi
+#### 4.1. Timing Attack on RSA 
 ##### Ý tưởng tấn công 
 Timing Attack tấn công vào thuật toán **Square and Multiply**(dùng để tính lũy thừa module $a^b \mod N$)
 Mã giả của thuật toán **Square and Multiply** dùng để tính $h^d\mod n$: 
@@ -548,7 +641,7 @@ Thay vì tính $m=c^d\mod n$ một cách trực tiếp, ta áp dụng **RSA-Blin
 ---
 
 
-## III. Methodology 
+## III. PoC(Proof of Concept) 
 Phần này chúng tôi triển khai một số tấn công chính của các nhóm lỗi trên trên môi trường mô phỏng lỗi. Từ đó rút ra các nhận xét trên các tấn công này. 
 
 |No.    |Attack    |Link PoC|
@@ -564,7 +657,8 @@ Phần này chúng tôi triển khai một số tấn công chính của các nh
 
 ## IV. Deep Deployment Weakness Analysis
 ### 1. TLS 
-TLS Handshake là bược thiết lập quan trọng cho một kết nối an toàn giữa client và server. Trong quá trình này, cả hai bên đồng ý về phiên bản TLS, cipher suite, xác thực server và tạo ra session key để mã hóa dữ liệu trong phiên đó.  
+TLS Handshake là bược thiết lập quan trọng cho một kết nối an toàn giữa client và server. Trong quá trình này, cả hai bên đồng ý về 
+ên bản TLS, cipher suite, xác thực server và tạo ra session key để mã hóa dữ liệu trong phiên đó.  
 ![image](https://hackmd.io/_uploads/SyWC9JdZbx.png)
 Các bước cơ bản trong quá trình TLS Handshake:
 - Client gửi message ClientHello đến server, message này gồm các phiên bản TLS mà Client hỗ trợ, danh sách các loại mã hóa mà Client hỗ trợ, cùng với một số ngẫu nhiên ClientRandom
@@ -587,6 +681,8 @@ Chú ý trong TLS 1.2, các tham số $(n, e, d)$ sử dụng trong mã hóa RSA
 Chú ý kịch bản tấn công này không thể sử dụng trong TLS 1.3 vì: 
 - Trong TLS 1.3, không hỗ trợ trao đổi khóa RSA 
 - Trong TLS 1.3, Server ký toàn bộ transript trong quá trình bắt tay, sau đó gửi cho Client để Client xác nhận lại. Vì thế Attacker không thể thay đổi bất cứ điều gì trong quá trình bắt tay. 
+
+> Tuy nhiên, mặc dù hệ thống có hỗ trợ TLS 1.3, nhưng nếu cấu hình máy chủ vẫn cho phép các phiên bản cũ hơn như TLS 1.2, attacker có thể thực hiện downgrade attack, đặc biệt khi cơ chế chống downgrade không được bật hoặc triển khai không đúng. Vì vậy, trong các hệ thống không yêu cầu tương thích ngược, khuyến nghị chỉ cho phép TLS 1.3 và vô hiệu hóa TLS 1.2 để giảm thiểu rủi ro bảo mật.
 
 ---
 
@@ -629,7 +725,7 @@ Chú ý khi Server sử dụng `"alg" = "RS256"` thì Server verify bằng publi
 
 ---
 
-### 3. Code signing & package ecosystems (D - check)
+### 3. Code signing & package ecosystems
 #### a. Key exposure
 **Phân tích:** Môi trường CI/CD (DevOps) thường là mắt xích yếu nhất. Nếu private key được lưu dưới dạng file (ví dụ: `.pem`) trong code repo hoặc biến môi trường không được mã hóa, kẻ tấn công xâm nhập được vào build server sẽ copy được key này.
 **Tác động:** Kẻ tấn công có thể tự ký (self-sign) các token hợp lệ (Forged Tokens) với bất kỳ quyền hạn nào (Admin privilege escalation). Đây là kịch bản "Golden Token".
@@ -640,7 +736,7 @@ Bên cạnh đó, từ một chữ ký hợp lệ cũng có thể tính được
 → **Signature malleability**: message không thay đổi, chữ ký thay đổi nhưng khi verify vẫn hợp lệ. 
 
 Trong thực tế, nhiều hệ thống cần gán một hành động với một ID để ngăn chặn Attacker thực hiện Replay Attack. Trước khi thực hiện một hành động, kiểm tra ID đó tồn tại chưa rồi mới thực hiện. 
-Nếu như hệ thống sử dụng chữ ký số làm ID, Attacker có thể tính một chữ ký hợp lệ khác tương ứng với hành động đó(Signature malleability) rồi thực hiện Replay Attack. 
+Nếu như hệ thống sử dụng chữ ký số làm ID, Attacker có thể tính một chữ ký hợp lệ khác tương ứng với hành động đó (Signature malleability) rồi thực hiện Replay Attack. 
 
 → Cần tách biệt chữ ký với ID: 
 - Signature: kiểm tra tính toàn vẹn và xác thực nguồn gốc của message 
@@ -722,15 +818,38 @@ Phần này được trình bày rõ trong phần **4. Implementation Attack** c
     * **Tác động:** Kẻ tấn công gửi hàng triệu gói tin biến thể, dựa vào phản hồi của server để giải mã Pre-Master Secret, từ đó giải mã toàn bộ phiên TLS.
     * **Khắc phục:** Loại bỏ hoàn toàn RSA Key Exchange trong cấu hình TLS server (chuyển sang dùng (EC)DHE cho Key Exchange và chỉ dùng RSA để ký). Nâng cấp lên TLS 1.3 (đã loại bỏ PKCS#1 v1.5 padding cho mã hóa).
 
+### Các kịch bản triển khai thực hiện 
+Chúng tôi có thực hiện một vài kịch bản triển khai tấn công RSA trên các hệ thống mô phỏng thực tế 
+|Tên|Mô tả|Link script|
+|---|---|---|
+|Wiener Attack on JWT|Mô phỏng hệ thống OAuth2 / OpenID Connect sử dụng `d` nhỏ để ký JWT, từ đó attacker thực hiện **Wiener Attack** để khôi phục `d` và giả mạo JWT|https://github.com/QuocGia12/NT219-Project/tree/main/poc/poc_implement/wiener%20attack%20on%20JWT|
+|JWT Algorithm Confusion|Mô phỏng cách một Hacker có thể vượt qua cơ chế xác thực RSA (bất đối xứng) bằng cách ép Server sử dụng thuật toán HMAC (đối xứng) với Public Key đóng vai trò là mật khẩu (Secret Key).|https://github.com/QuocGia12/NT219-Project/tree/main/poc/poc_implement/JWT_Confusion|
+|RSA Signature Malleability & Replay Attack|Minh họa lỗ hổng Signature Malleability trong việc triển khai thuật toán RSA và cách nó dẫn đến lỗ hổng nghiêm trọng Replay Attack.|http://github.com/QuocGia12/NT219-Project/tree/main/poc/poc_implement/signature_malleability%20and%20replay_attack|
+
 ### Bảng tổng hợp giải pháp triển khai:
 | Triển khai | Weakness | Giải pháp |
 |---|---|---|
-**1. TLS (Web Server)** | **a. Không forward secrecy (TLS 1.2):** Nếu Attacker lấy được $d$, sẽ giải mã được toàn bộ các phiên quá khứ do Server dùng chung tham số $(n, e, d)$ cho mã hóa.<br><br>**b. Kịch bản Bleichenbacher Attack (TLS 1.2):** Attacker ép Server chọn RSA Cipher Suite, dùng Server làm Oracle để lấy PreMasterSecret. | - **Sử dụng TLS 1.3:** Đã loại bỏ hoàn toàn trao đổi khóa RSA, chỉ sử dụng ECDHE (đảm bảo tính forward secrecy).<br>- Trong TLS 1.3, Server ký toàn bộ transcript, Attacker không thể thay đổi quá trình bắt tay. |
-| **2. JWT / token signing (RS256) (G-check)** | **Weak signing tools / key exposure:** Private key (file `.pem`/biến môi trường) lưu trên code repo hoặc build server. Attacker copy được sẽ tự ký "Golden Token" (leo quyền Admin). | - Không lưu private key trên đĩa cứng server ứng dụng.<br>- Sử dụng **HSM** hoặc dịch vụ **quản lý khóa đám mây** (AWS KMS, Azure Key Vault).<br>- Private key không bao giờ rời khỏi thiết bị bảo mật. |
+**1. TLS (Web Server)** | **a. Không forward secrecy (TLS 1.2):** Nếu Attacker lấy được $d$, sẽ giải mã được toàn bộ các phiên quá khứ do Server dùng chung tham số $(n, e, d)$ cho mã hóa.<br><br>**b. Kịch bản Bleichenbacher Attack (TLS 1.2):** Attacker ép Server chọn RSA Cipher Suite, dùng Server làm Oracle để lấy PreMasterSecret. | - **Sử dụng TLS 1.3:** Đã loại bỏ hoàn toàn trao đổi khóa RSA, chỉ sử dụng ECDHE (đảm bảo tính forward secrecy).<br>- Trong TLS 1.3, Server ký toàn bộ transcript, Attacker không thể thay đổi quá trình bắt tay.<br>- Khuyến nghị **chỉ cho phép TLS 1.3** và **vô hiệu hóa TLS 1.2** để giảm thiểu rủi ro bảo mật.  |
+| **2. JWT / token signing (RS256)** | - `"alg": "None"`<br>- Verify `"alg": "HS256"` trong khi thuật toán ký là `RS256` | - Cần từ chối `"alg": "None"`<br>- Phải xác định rõ `alg` khi verify |
 | **3. Code signing & package ecosystems** |**Weak signing tools / key exposure:** Private key (file `.pem`/biến môi trường) lưu trên code repo hoặc build server. Attacker copy được sẽ tự ký "Golden Token" (leo quyền Admin).<br> **Legacy signature format:** là các lược đồ hoặc định dạng chữ ký lỗi thời cho phép một message có thể có nhiều chữ ký hợp lệ khác nhau, dù được ký bằng cùng một private key. Dẫn đến: <br>- **Signature Malleability:** Có nhiều chữ ký được verify hợp lệ cho cùng một message → Message không thay đổi, chữ ký thay đổi nhưng vẫn hợp lệ.<br>- **Replay Attack:** Signature Malleability + Sử dụng Signature làm ID định danh action.   |- Không lưu private key trên đĩa cứng server ứng dụng.<br>- Sử dụng **HSM** hoặc dịch vụ **quản lý khóa đám mây** (AWS KMS, Azure Key Vault).<br>- Private key không bao giờ rời khỏi thiết bị bảo mật. <br> - Không sử dụng Signature làm ID định danh hành động(sử dụng Nonce thay thế), tách biệt vai trò của Signature và ID <br>- Hệ thống cần chỉ chấp nhận chữ ký ở dạng canonical, và từ chối các chữ ký có biểu diễn khác nhưng vẫn verify được.|
 | **4. Smartcards / HSMs / TPMs** | **a. Side-channel (Power Analysis):** Đo dao động điện năng để tái tạo private key.<br>**b. Fault Injection (RSA-CRT):** Dùng laser/điện áp gây lỗi tính toán $\to$ lộ thừa số nguyên tố ($p$ hoặc $q$).<br>**c. API misuse:** Dùng HSM làm Oracle giải mã hoặc dùng sai quyền hạn key. | - Dùng smartcard chuẩn **FIPS 140-2 Level 3+** (có mesh shield).<br>- **Verify on-chip:** Kiểm tra chữ ký trên chip trước khi xuất, nếu sai thì hủy phiên.<br>- **Key Wrapping:** Chỉ wrap key, không decrypt dữ liệu thô.<br>- Giới hạn **Usage Flags**: Chỉ `Sign` hoặc `Decrypt`, không bật cả hai. |
 | **5. Random Number Generator (RNG)** | **RNG kém:** Không dùng TRNG hoặc dùng PRNG tự chế $\to$ sinh số không đủ ngẫu nhiên $\to$ trùng thừa số $p$ $\to$ tính được private key bằng GCD. | - Sử dụng **TRNG** để sinh entropy (seed).<br>- Sử dụng PRNG theo chuẩn **NIST** (Hash_DRBG, HMAC_DRBG, AES-CTR-DRBG, ChaCha20-DRBG).<br>- Sử dụng HSM/TPM khi có thể. |
 | **6. Implementation bugs & side channels** | **a. Timing leaks:** Chênh lệch thời gian tính toán (Square-and-Multiply) làm lộ $d$.<br>**b. CRT recombination faults (Bellcore Attack):** Lỗi khi tính $S_p$ dẫn đến lộ $q$.<br>**c. Padding oracle (Bleichenbacher/ROBOT):** Server phản hồi lỗi khác nhau với định dạng `00 02` sai $\to$ Attacker giải mã được Pre-Master Secret. | - Cài đặt **Constant-time** (thời gian không phụ thuộc dữ liệu).<br>- Dùng kỹ thuật **Blinding**.<br>- Luôn kiểm tra lại kết quả $S^e \equiv M \pmod N$ trước khi trả về $S$.<br>- Loại bỏ RSA Key Exchange (chuyển sang (EC)DHE).<br>- Nâng cấp lên **TLS 1.3**. |
+
+#### Checklist lưu ý khi triển khai RSA: 
+- **Key size:** sử dụng `n` 3072 bits để thời gian an toàn lâu nhất có thể. Bên cạnh đó, sử dụng `e = 65537`, khi đó `d` được tính theo `e` sẽ tự động lớn, tránh các tấn công về key nhỏ 
+- **Padding scheme:** Luôn phải sử dụng pading trong RSA: 
+    - Key exchange → RSA-OAEP 
+    - Chữ ký số → RSA-PSS 
+    
+    Tuyệt đối không sử dụng padding scheme PKCS#1 v1.5 trong RSA key exchange 
+- **Side chanel Protections:** 
+    - **Constant time**: thời gian xử lý và trả về giống nhau với mọi input 
+    - **Không được phân biệt lỗi trả về**, mọi lỗi xảy ra đều trả về thông tin như nhau → không tạo thành oracle
+    - **Luôn sử dụng blinding**: từ đó, giả các thông tin attacker có thể thu được qua side-chanel
+    - **Verify Signature trước khi trả về** khi sử dụng **RSA-CRT** 
+- **RNG:** dùng OS CSPRNG, không tự seed và đảm bảo entropy đủ
+- Đối với các hệ thống có giá trị cao (CA, TLS private key, firmware signing), **nên sử dụng HSM** để bảo vệ private key và chống side-channel/fault attacks.
 
 ---
 
@@ -751,7 +870,8 @@ Tóm lại, RSA vẫn có thể được sử dụng an toàn **chỉ khi** đi 
 [4]. [Everlasting ROBOT: the Marvin Attack](https://people.redhat.com/~hkario/marvin/marvin-attack-paper.pdf)
 [5]. [Fault attacks for CRT based RSA: new attacks, new results, and new countermeasures](https://dl.ifip.org/db/conf/wistp/wistp2007/KimQ07.pdf)
 [6]. [Kocher. Timing Attacks on Implementations of Diffie-Hellman, RSA, DSS, and Other Systems ](https://paulkocher.com/doc/TimingAttacks.pdf)
-[7]. https://en.wikipedia.org/wiki/Digital_signature
+[7]. [James Manger. A Chosen Ciphertext Attack on RSA Optimal Asymmetric Encryption Padding (OAEP) as Standardized in PKCS #1 v2.0](https://archiv.infsec.ethz.ch/education/fs08/secsem/manger01.pdf)
+[8]. https://en.wikipedia.org/wiki/Digital_signature
 
 
 
